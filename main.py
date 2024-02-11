@@ -102,22 +102,22 @@ class Chessboard:
             count -= 16
 
     def get_all_pieces(self):
-        self.white_pieces |= self.white_pawn.get_bitboard()
-        self.white_pieces |= self.white_knight.get_bitboard()
-        self.white_pieces |= self.white_bishop.get_bitboard()
-        self.white_pieces |= self.white_rook.get_bitboard()
-        self.white_pieces |= self.white_queen.get_bitboard()
-        self.white_pieces |= self.white_king.get_bitboard()
+        self.white_pieces.board |= self.white_pawn.get_bitboard()
+        self.white_pieces.board |= self.white_knight.get_bitboard()
+        self.white_pieces.board |= self.white_bishop.get_bitboard()
+        self.white_pieces.board |= self.white_rook.get_bitboard()
+        self.white_pieces.board |= self.white_queen.get_bitboard()
+        self.white_pieces.board |= self.white_king.get_bitboard()
 
-        self.black_pieces |= self.black_pawn.get_bitboard()
-        self.black_pieces |= self.black_knight.get_bitboard()
-        self.black_pieces |= self.black_bishop.get_bitboard()
-        self.black_pieces |= self.black_rook.get_bitboard()
-        self.black_pieces |= self.black_queen.get_bitboard()
-        self.black_pieces |= self.black_king.get_bitboard()
+        self.black_pieces.board |= self.black_pawn.get_bitboard()
+        self.black_pieces.board |= self.black_knight.get_bitboard()
+        self.black_pieces.board |= self.black_bishop.get_bitboard()
+        self.black_pieces.board |= self.black_rook.get_bitboard()
+        self.black_pieces.board |= self.black_queen.get_bitboard()
+        self.black_pieces.board |= self.black_king.get_bitboard()
 
-        self.all_pieces |= self.white_pieces.get_bitboard()
-        self.all_pieces |= self.black_pieces.get_bitboard()
+        self.all_pieces.board |= self.white_pieces.get_bitboard()
+        self.all_pieces.board |= self.black_pieces.get_bitboard()
 
     def print_board(self):
         for rank in range(7, -1, -1):
@@ -198,7 +198,7 @@ def convert_algebraic_to_int(move):
 class ChessGame:
     def __init__(self):
         self.board = Chessboard()
-        self.is_whites_turn = True
+        self.is_white_turn = True
 
     def print_state(self):
         self.board.print_board()
@@ -206,17 +206,43 @@ class ChessGame:
     def standard_setup(self):
         self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 
-    def make_move(self, move):
+    def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
+        moves = []
 
-        if self.is_whites_turn:
+        if self.is_white_turn:
             if algebraic_move[0] == "P":
-                self.board.white_pawn.set_square(algebraic_move[1])
+                moves = self.generate_pawn_moves(start_square)
+
+        if algebraic_move[1] in moves:
+            if algebraic_move[0] == "P":
+                self.board.white_pawn.set_square(algebraic_move[1]) if self.is_white_turn \
+                    else self.board.black_pawn.set_square(algebraic_move[1])
+                self.board.white_pawn.clear_square(start_square) if self.is_white_turn \
+                    else self.board.black_pawn.clear_square(start_square)
+
+    def generate_pawn_moves(self, pawn_square):
+        self.board.get_all_pieces()
+        moves = []
+
+        pawn_bitboard = 1 << pawn_square
+        opponent_piece = self.board.black_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.white_pieces.get_bitboard()
+        all_pieces = self.board.all_pieces.get_bitboard()
+
+        direction = 1 if self.is_white_turn else -1
+
+        # single square moves
+        single_moves = (pawn_bitboard << (8 * direction)) & ~all_pieces
+        if single_moves:
+            moves.append(pawn_square + (8 * direction))
+
+        return moves
 
 
 if __name__ == "__main__":
     game = ChessGame()
     game.standard_setup()
     game.print_state()
-    game.make_move("e4")
+    game.make_move(9, input("move:"))
     game.print_state()
