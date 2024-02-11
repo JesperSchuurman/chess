@@ -28,9 +28,11 @@ class Bitboard:
                 else:
                     print('0', end=' ')
             print()
+
+
 class Chessboard:
     def __init__(self):
-        #white pieces
+        # white pieces
         self.white_pawn = Bitboard()
         self.white_knight = Bitboard()
         self.white_bishop = Bitboard()
@@ -39,7 +41,7 @@ class Chessboard:
         self.white_king = Bitboard()
         self.white_pieces = Bitboard()
 
-        #black pieces
+        # black pieces
         self.black_pawn = Bitboard()
         self.black_knight = Bitboard()
         self.black_bishop = Bitboard()
@@ -50,52 +52,54 @@ class Chessboard:
 
         self.all_pieces = Bitboard()
 
-    def setup_board(self):
-        #set up the white pieces
-        self.white_pawn.set_square(2)
-        self.white_pawn.set_square(10)
-        self.white_pawn.set_square(18)
-        self.white_pawn.set_square(26)
-        self.white_pawn.set_square(34)
-        self.white_pawn.set_square(42)
-        self.white_pawn.set_square(50)
-        self.white_pawn.set_square(58)
+    def setup_board(self, start_position):
+        position_by_rank = start_position.split("/")
+        count = 56
 
-        self.white_knight.set_square(17)
-        self.white_knight.set_square(41)
-
-        self.white_bishop.set_square(9)
-        self.white_bishop.set_square(49)
-
-        self.white_rook.set_square(1)
-        self.white_rook.set_square(57)
-
-        self.white_queen.set_square(25)
-
-        self.white_king.set_square(33)
-
-        #set up the black pieces
-        self.black_pawn.set_square(7)
-        self.black_pawn.set_square(15)
-        self.black_pawn.set_square(23)
-        self.black_pawn.set_square(31)
-        self.black_pawn.set_square(39)
-        self.black_pawn.set_square(47)
-        self.black_pawn.set_square(55)
-        self.black_pawn.set_square(63)
-
-        self.black_knight.set_square(24)
-        self.black_knight.set_square(48)
-
-        self.black_bishop.set_square(16)
-        self.black_bishop.set_square(56)
-
-        self.black_rook.set_square(8)
-        self.black_rook.set_square(64)
-
-        self.black_queen.set_square(32)
-
-        self.black_king.set_square(40)
+        for rank in position_by_rank:
+            for square in rank:
+                if square.isalpha():
+                    if square.isupper():
+                        if square == "P":
+                            self.white_pawn.set_square(count)
+                            count += 1
+                        elif square == "N":
+                            self.white_knight.set_square(count)
+                            count += 1
+                        elif square == "B":
+                            self.white_bishop.set_square(count)
+                            count += 1
+                        elif square == "R":
+                            self.white_rook.set_square(count)
+                            count += 1
+                        elif square == "Q":
+                            self.white_queen.set_square(count)
+                            count += 1
+                        elif square == "K":
+                            self.white_king.set_square(count)
+                            count += 1
+                    elif square.islower():
+                        if square == "p":
+                            self.black_pawn.set_square(count)
+                            count += 1
+                        elif square == "n":
+                            self.black_knight.set_square(count)
+                            count += 1
+                        elif square == "b":
+                            self.black_bishop.set_square(count)
+                            count += 1
+                        elif square == "r":
+                            self.black_rook.set_square(count)
+                            count += 1
+                        elif square == "q":
+                            self.black_queen.set_square(count)
+                            count += 1
+                        elif square == "k":
+                            self.black_king.set_square(count)
+                            count += 1
+                elif square.isdigit():
+                    count += int(square)
+            count -= 16
 
     def get_all_pieces(self):
         self.white_pieces |= self.white_pawn.get_bitboard()
@@ -119,43 +123,100 @@ class Chessboard:
         for rank in range(7, -1, -1):
             for file in range(8):
                 square = rank * 8 + file
-                if square & self.white_pawn.get_bitboard():
+                found_piece = False
+                if self.white_pawn.is_square_set(square):
                     print('P', end=' ')
-                elif square & self.white_knight.get_bitboard():
+                    found_piece = True
+                elif self.white_knight.is_square_set(square):
                     print('N', end=' ')
-                elif square & self.white_bishop.get_bitboard():
+                    found_piece = True
+                elif self.white_bishop.is_square_set(square):
                     print('B', end=' ')
-                elif square & self.white_rook.get_bitboard():
+                    found_piece = True
+                elif self.white_rook.is_square_set(square):
                     print('R', end=' ')
-                elif square & self.white_queen.get_bitboard():
+                    found_piece = True
+                elif self.white_queen.is_square_set(square):
                     print('Q', end=' ')
-                elif square & self.white_king.get_bitboard():
+                    found_piece = True
+                elif self.white_king.is_square_set(square):
                     print('K', end=' ')
-                elif square & self.black_pawn.get_bitboard():
+                    found_piece = True
+                elif self.black_pawn.is_square_set(square):
                     print('p', end=' ')
-                elif square & self.black_knight.get_bitboard():
+                    found_piece = True
+                elif self.black_knight.is_square_set(square):
                     print('n', end=' ')
-                elif square & self.black_bishop.get_bitboard():
+                    found_piece = True
+                elif self.black_bishop.is_square_set(square):
                     print('b', end=' ')
-                elif square & self.black_rook.get_bitboard():
+                    found_piece = True
+                elif self.black_rook.is_square_set(square):
                     print('r', end=' ')
-                elif square & self.black_queen.get_bitboard():
+                    found_piece = True
+                elif self.black_queen.is_square_set(square):
                     print('q', end=' ')
-                elif square & self.black_king.get_bitboard():
+                    found_piece = True
+                elif self.black_king.is_square_set(square):
                     print('k', end=' ')
-                else:
+                    found_piece = True
+
+                if not found_piece:
                     print('.', end=' ')
             print()
+
+def get_file_as_number(file):
+    if file == "a":
+        return 0
+    elif file == "b":
+        return 1
+    elif file == "c":
+        return 2
+    elif file == "d":
+        return 3
+    elif file == "e":
+        return 4
+    elif file == "f":
+        return 5
+    elif file == "g":
+        return 6
+    elif file == "h":
+        return 7
+
+def convert_algebraic_to_int(move):
+    destination_square = move[-2:]
+
+    destination_int = get_file_as_number(destination_square[0]) + (int(destination_square[1]) - 1) * 8
+
+    if move[0].islower():
+        piece_type = "P"
+    else:
+        piece_type = move[0]
+
+    return [piece_type, destination_int]
 
 class ChessGame:
     def __init__(self):
         self.board = Chessboard()
-        self.board.setup_board()
+        self.is_whites_turn = True
 
     def print_state(self):
-        self.board.get_all_pieces
+        self.board.print_board()
+
+    def standard_setup(self):
+        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+
+    def make_move(self, move):
+        algebraic_move = convert_algebraic_to_int(move)
+
+        if self.is_whites_turn:
+            if algebraic_move[0] == "P":
+                self.board.white_pawn.set_square(algebraic_move[1])
+
 
 if __name__ == "__main__":
-    board = Chessboard()
-    board.setup_board()
-    board.print_board()
+    game = ChessGame()
+    game.standard_setup()
+    game.print_state()
+    game.make_move("e4")
+    game.print_state()
