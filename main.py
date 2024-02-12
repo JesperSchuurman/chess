@@ -204,15 +204,18 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/ppppppp1/8/8/8/7p/PPPPPPPP/RNBQKBNR")
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
         moves = []
 
-        if self.is_white_turn:
-            if algebraic_move[0] == "P":
-                moves = self.generate_pawn_moves(start_square)
+        start_square = int(start_square)
+
+        if algebraic_move[0] == "P":
+            moves = self.generate_pawn_moves(start_square)
+        elif algebraic_move[0] == "N":
+            moves = self.generate_knight_moves(start_square)
 
         if algebraic_move[1] in moves:
             if algebraic_move[0] == "P":
@@ -220,22 +223,60 @@ class ChessGame:
                     else self.board.black_pawn.set_square(algebraic_move[1])
                 self.board.white_pawn.clear_square(start_square) if self.is_white_turn \
                     else self.board.black_pawn.clear_square(start_square)
+            elif algebraic_move[0] == "N":
+                self.board.white_knight.set_square(algebraic_move[1]) if self.is_white_turn \
+                    else self.board.black_knight.set_square(algebraic_move[1])
+                self.board.white_knight.clear_square(start_square) if self.is_white_turn \
+                    else self.board.black_knight.clear_square(start_square)
+            if self.is_white_turn:
+                self.is_white_turn = False
+            else:
+                self.is_white_turn = True
+        else:
+            print("This isn't a valid move.")
 
     def generate_pawn_moves(self, pawn_square):
         self.board.get_all_pieces()
         moves = []
 
+        pawn_square = int(pawn_square)
+
         pawn_bitboard = 1 << pawn_square
-        opponent_piece = self.board.black_pieces.get_bitboard() if self.is_white_turn \
+        opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
             else self.board.white_pieces.get_bitboard()
         all_pieces = self.board.all_pieces.get_bitboard()
 
         direction = 1 if self.is_white_turn else -1
+        starting_rank = 1 if self.is_white_turn else 6
 
         # single square moves
-        single_moves = (pawn_bitboard << (8 * direction)) & ~all_pieces
+        single_moves = (pawn_bitboard << abs(8 * direction)) & ~all_pieces
         if single_moves:
             moves.append(pawn_square + (8 * direction))
+
+        # double square moves
+        if pawn_square // 8 == starting_rank:
+            double_moves = (pawn_bitboard << abs(16 * direction)) & ~all_pieces
+            if double_moves:
+                moves.append(pawn_square + (16 * direction))
+
+        # capturing moves
+        right_capture_square = pawn_square + (9 * direction)
+        left_capture_square = pawn_square + (7 * direction)
+
+        if right_capture_square % 8 != 0:
+            if opponent_pieces & (1 << right_capture_square):
+                moves.append(right_capture_square)
+
+        if left_capture_square % 8 != 7:
+            if opponent_pieces & (1 << left_capture_square):
+                moves.append(left_capture_square)
+
+        return moves
+
+    def generate_knight_moves(self, knight_square):
+        self.board.get_all_pieces()
+        moves = []
 
         return moves
 
@@ -244,5 +285,9 @@ if __name__ == "__main__":
     game = ChessGame()
     game.standard_setup()
     game.print_state()
-    game.make_move(9, input("move:"))
-    game.print_state()
+    count = 0
+    while count < 5:
+        game.make_move(input("starting_square:"), input("move:"))
+        # game.make_move(8, "a4")
+        game.print_state()
+        count += 1
