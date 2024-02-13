@@ -165,6 +165,7 @@ class Chessboard:
                     print('.', end=' ')
             print()
 
+
 def get_file_as_number(file):
     if file == "a":
         return 0
@@ -183,6 +184,7 @@ def get_file_as_number(file):
     elif file == "h":
         return 7
 
+
 def convert_algebraic_to_int(move):
     destination_square = move[-2:]
 
@@ -195,6 +197,7 @@ def convert_algebraic_to_int(move):
 
     return [piece_type, destination_int]
 
+
 class ChessGame:
     def __init__(self):
         self.board = Chessboard()
@@ -204,7 +207,7 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/ppppppp1/8/8/8/7p/PPPPPPPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR")
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
@@ -216,6 +219,8 @@ class ChessGame:
             moves = self.generate_pawn_moves(start_square)
         elif algebraic_move[0] == "N":
             moves = self.generate_knight_moves(start_square)
+        elif algebraic_move[0] == "B":
+            moves = self.generate_bishop_moves(start_square)
 
         if algebraic_move[1] in moves:
             if algebraic_move[0] == "P":
@@ -228,6 +233,12 @@ class ChessGame:
                     else self.board.black_knight.set_square(algebraic_move[1])
                 self.board.white_knight.clear_square(start_square) if self.is_white_turn \
                     else self.board.black_knight.clear_square(start_square)
+            elif algebraic_move[0] == "B":
+                self.board.white_bishop.set_square(algebraic_move[1]) if self.is_white_turn \
+                    else self.board.black_bishop.set_square(algebraic_move[1])
+                self.board.white_bishop.clear_square(start_square) if self.is_white_turn \
+                    else self.board.black_bishop.clear_square(start_square)
+
             if self.is_white_turn:
                 self.is_white_turn = False
             else:
@@ -279,22 +290,63 @@ class ChessGame:
         knight_bitboard = 1 << knight_square
         own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
             else self.board.black_pieces.get_bitboard()
-        all_pieces = self.board.all_pieces.get_bitboard()
 
         shift_possibilities = [6, 10, 15, 17]
 
         # forward knight moves
         for shift in shift_possibilities:
-            forward_moves = (knight_bitboard << abs(-1 * shift)) & ~own_pieces
+            forward_moves = (knight_bitboard >> shift) & ~own_pieces
             if forward_moves:
-                moves.append(knight_square + (-1 * shift))
+                moves.append(knight_square - shift)
 
         # backward knight moves
         for shift in shift_possibilities:
-            backward_moves = (knight_bitboard << abs(1 * shift)) & ~own_pieces
+            backward_moves = (knight_bitboard << shift) & ~own_pieces
             if backward_moves:
                 moves.append(knight_square + shift)
 
+        return moves
+
+    def generate_bishop_moves(self, bishop_square):
+        self.board.get_all_pieces()
+        moves = []
+
+        bishop_bitboard = 1 << bishop_square
+        own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.black_pieces.get_bitboard()
+
+        # left forward
+        for i in range(1, 7):
+            left_forward = (bishop_bitboard << abs((i * 8 - i) * -1)) & ~own_pieces
+
+            if left_forward and 0 <= (bishop_square + (i * 8 - i)) <= 63:
+                moves.append(bishop_square + (i * 8 - 1))
+            else:
+                break
+        # right forward
+        for i in range(1, 7):
+            right_forward = (bishop_bitboard << abs((i * 8 + i) * -1)) & ~own_pieces
+
+            if right_forward and 0 <= (bishop_square + (i * 8 + i)) <= 63:
+                moves.append(bishop_square + (i * 8 + i))
+            else:
+                break
+        # left backward
+        for i in range(1, 7):
+            left_backward = (bishop_bitboard << (i * 8 + i)) & ~own_pieces
+
+            if left_backward and 0 <= (bishop_square - (i * 8 + i)) <= 63:
+                moves.append(bishop_square - (i * 8 + i))
+            else:
+                break
+        # right backward
+        for i in range(1, 7):
+            right_backward = (bishop_bitboard << abs(i * 8 - i)) & ~own_pieces
+
+            if right_backward and 0 <= (bishop_square - (i * 8 - i)) <= 63:
+                moves.append(bishop_square - (i * 8 - i))
+            else:
+                break
         return moves
 
 
@@ -305,6 +357,6 @@ if __name__ == "__main__":
     count = 0
     while count < 5:
         game.make_move(input("starting_square:"), input("move:"))
-        # game.make_move(9, "b3")
+        # game.make_move(2, "Bh6")
         game.print_state()
         count += 1
