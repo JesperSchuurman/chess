@@ -239,8 +239,6 @@ class ChessGame:
         self.board.get_all_pieces()
         moves = []
 
-        pawn_square = int(pawn_square)
-
         pawn_bitboard = 1 << pawn_square
         opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
             else self.board.white_pieces.get_bitboard()
@@ -278,6 +276,25 @@ class ChessGame:
         self.board.get_all_pieces()
         moves = []
 
+        knight_bitboard = 1 << knight_square
+        own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.black_pieces.get_bitboard()
+        all_pieces = self.board.all_pieces.get_bitboard()
+
+        shift_possibilities = [6, 10, 15, 17]
+
+        # forward knight moves
+        for shift in shift_possibilities:
+            forward_moves = (knight_bitboard << abs(-1 * shift)) & ~own_pieces
+            if forward_moves:
+                moves.append(knight_square + (-1 * shift))
+
+        # backward knight moves
+        for shift in shift_possibilities:
+            backward_moves = (knight_bitboard << abs(1 * shift)) & ~own_pieces
+            if backward_moves:
+                moves.append(knight_square + shift)
+
         return moves
 
 
@@ -288,6 +305,6 @@ if __name__ == "__main__":
     count = 0
     while count < 5:
         game.make_move(input("starting_square:"), input("move:"))
-        # game.make_move(8, "a4")
+        # game.make_move(9, "b3")
         game.print_state()
         count += 1
