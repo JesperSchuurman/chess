@@ -207,11 +207,10 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/PPPP1PPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR")
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
-        moves = []
 
         start_square = int(start_square)
 
@@ -259,6 +258,32 @@ class ChessGame:
                     else self.board.black_king.set_square(algebraic_move[1])
                 self.board.white_king.clear_square(start_square) if self.is_white_turn \
                     else self.board.black_king.clear_square(start_square)
+            if move.__contains__("x"):
+                # taking pawns
+                if self.board.white_pawn.is_square_set(algebraic_move[1]):
+                    self.board.white_pawn.clear_square(algebraic_move[1])
+                elif self.board.black_pawn.is_square_set(algebraic_move[1]):
+                    self.board.black_pawn.clear_square(algebraic_move[1])
+                # taking knights
+                elif self.board.white_knight.is_square_set(algebraic_move[1]):
+                    self.board.white_knight.clear_square(algebraic_move[1])
+                elif self.board.black_knight.is_square_set(algebraic_move[1]):
+                    self.board.black_knight.clear_square(algebraic_move[1])
+                # taking bishops
+                elif self.board.white_bishop.is_square_set(algebraic_move[1]):
+                    self.board.white_bishop.clear_square(algebraic_move[1])
+                elif self.board.black_bishop.is_square_set(algebraic_move[1]):
+                    self.board.black_bishop.clear_square(algebraic_move[1])
+                # taking rooks
+                elif self.board.white_rook.is_square_set(algebraic_move[1]):
+                    self.board.white_rook.clear_square(algebraic_move[1])
+                elif self.board.black_rook.is_square_set(algebraic_move[1]):
+                    self.board.black_rook.clear_square(algebraic_move[1])
+                # taking queens
+                elif self.board.white_queen.is_square_set(algebraic_move[1]):
+                    self.board.white_queen.clear_square(algebraic_move[1])
+                elif self.board.black_queen.is_square_set(algebraic_move[1]):
+                    self.board.black_queen.clear_square(algebraic_move[1])
 
             if self.is_white_turn:
                 self.is_white_turn = False
@@ -463,4 +488,5 @@ if __name__ == "__main__":
         game.make_move(input("starting_square:"), input("move:"))
         # game.make_move(3, "Qd3")
         game.print_state()
+        game.board.black_pawn.print_board()
         count += 1
