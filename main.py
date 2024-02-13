@@ -207,7 +207,7 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/ppppppp1/7p/8/8/8/PPP1PPPP/RNBQKBNR")
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
@@ -360,37 +360,51 @@ class ChessGame:
         bishop_bitboard = 1 << bishop_square
         own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
             else self.board.black_pieces.get_bitboard()
+        opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.white_pieces.get_bitboard()
 
         # left forward
         for i in range(1, 8):
             left_forward = (bishop_bitboard << abs((i * 8 - i) * -1)) & ~own_pieces
 
-            if left_forward and 0 <= (bishop_square + (i * 8 - i)) <= 63:
-                moves.append(bishop_square + (i * 8 - 1))
+            destination = bishop_square + (i * 8 - i)
+            if left_forward and 0 <= destination <= 63:
+                moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
         # right forward
         for i in range(1, 8):
             right_forward = (bishop_bitboard << abs((i * 8 + i) * -1)) & ~own_pieces
 
-            if right_forward and 0 <= (bishop_square + (i * 8 + i)) <= 63:
-                moves.append(bishop_square + (i * 8 + i))
+            destination = bishop_square + (i * 8 + i)
+            if right_forward and 0 <= destination <= 63:
+                moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
         # left backward
         for i in range(1, 8):
             left_backward = (bishop_bitboard << (i * 8 + i)) & ~own_pieces
 
-            if left_backward and 0 <= (bishop_square - (i * 8 + i)) <= 63:
-                moves.append(bishop_square - (i * 8 + i))
+            destination = bishop_square - (i * 8 + i)
+            if left_backward and 0 <= destination <= 63:
+                moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
         # right backward
         for i in range(1, 8):
             right_backward = (bishop_bitboard << abs(i * 8 - i)) & ~own_pieces
 
-            if right_backward and 0 <= (bishop_square - (i * 8 - i)) <= 63:
-                moves.append(bishop_square - (i * 8 - i))
+            destination = bishop_square - (i * 8 - i)
+            if right_backward and 0 <= destination <= 63:
+                moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
         return moves
@@ -402,6 +416,8 @@ class ChessGame:
         rook_bitboard = 1 << rook_square
         own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
             else self.board.black_pieces.get_bitboard()
+        opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.white_pieces.get_bitboard()
 
         # up
         for i in range(1, 8):
@@ -410,6 +426,8 @@ class ChessGame:
             destination = (rook_square + (8 * i))
             if up_move and 0 <= destination <= 63:
                 moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
         # down
@@ -419,6 +437,8 @@ class ChessGame:
             destination = (rook_square - (8 * i))
             if down_move and 0 <= destination <= 63:
                 moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
 
@@ -429,6 +449,8 @@ class ChessGame:
             destination = (rook_square + i)
             if down_move and 0 <= destination <= 63:
                 moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
 
@@ -439,6 +461,8 @@ class ChessGame:
             destination = (rook_square - i)
             if down_move and 0 <= destination <= 63:
                 moves.append(destination)
+                if opponent_pieces & (1 << destination):
+                    break
             else:
                 break
 
@@ -485,8 +509,8 @@ if __name__ == "__main__":
     game.print_state()
     count = 0
     while count < 5:
-        game.make_move(input("starting_square:"), input("move:"))
-        # game.make_move(3, "Qd3")
+        # game.make_move(input("starting_square:"), input("move:"))
+        game.make_move(2, "Bh6")
         game.print_state()
         game.board.black_pawn.print_board()
         count += 1
