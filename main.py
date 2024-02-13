@@ -323,7 +323,7 @@ class ChessGame:
             else self.board.black_pieces.get_bitboard()
 
         # left forward
-        for i in range(1, 7):
+        for i in range(1, 8):
             left_forward = (bishop_bitboard << abs((i * 8 - i) * -1)) & ~own_pieces
 
             if left_forward and 0 <= (bishop_square + (i * 8 - i)) <= 63:
@@ -331,7 +331,7 @@ class ChessGame:
             else:
                 break
         # right forward
-        for i in range(1, 7):
+        for i in range(1, 8):
             right_forward = (bishop_bitboard << abs((i * 8 + i) * -1)) & ~own_pieces
 
             if right_forward and 0 <= (bishop_square + (i * 8 + i)) <= 63:
@@ -339,7 +339,7 @@ class ChessGame:
             else:
                 break
         # left backward
-        for i in range(1, 7):
+        for i in range(1, 8):
             left_backward = (bishop_bitboard << (i * 8 + i)) & ~own_pieces
 
             if left_backward and 0 <= (bishop_square - (i * 8 + i)) <= 63:
@@ -347,7 +347,7 @@ class ChessGame:
             else:
                 break
         # right backward
-        for i in range(1, 7):
+        for i in range(1, 8):
             right_backward = (bishop_bitboard << abs(i * 8 - i)) & ~own_pieces
 
             if right_backward and 0 <= (bishop_square - (i * 8 - i)) <= 63:
@@ -365,7 +365,7 @@ class ChessGame:
             else self.board.black_pieces.get_bitboard()
 
         # up
-        for i in range(1, 7):
+        for i in range(1, 8):
             up_move = (rook_bitboard << abs((i * 8) * -1)) & ~own_pieces
 
             destination = (rook_square + (8 * i))
@@ -374,7 +374,7 @@ class ChessGame:
             else:
                 break
         # down
-        for i in range(1, 7):
+        for i in range(1, 8):
             down_move = (rook_bitboard << abs(i * 8)) & ~own_pieces
 
             destination = (rook_square - (8 * i))
@@ -384,7 +384,7 @@ class ChessGame:
                 break
 
         # right
-        for i in range(1, 7):
+        for i in range(1, 8):
             down_move = (rook_bitboard << abs(-i)) & ~own_pieces
 
             destination = (rook_square + i)
@@ -394,7 +394,7 @@ class ChessGame:
                 break
 
         # left
-        for i in range(1, 7):
+        for i in range(1, 8):
             down_move = (rook_bitboard << abs(i)) & ~own_pieces
 
             destination = (rook_square - i)
@@ -413,6 +413,8 @@ if __name__ == "__main__":
     count = 0
     while count < 5:
         # game.make_move(input("starting_square:"), input("move:"))
-        game.make_move(2, "Bh6")
+        game.make_move(0, "Ra4")
+        game.make_move(49, "b5")
+        game.make_move(24, "Rh4")
         game.print_state()
         count += 1
