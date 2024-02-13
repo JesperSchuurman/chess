@@ -207,7 +207,7 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/PPPP1PPP/RNBQKBNR")
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
@@ -223,6 +223,10 @@ class ChessGame:
             moves = self.generate_bishop_moves(start_square)
         elif algebraic_move[0] == "R":
             moves = self.generate_rook_moves(start_square)
+        elif algebraic_move[0] == "Q":
+            moves = self.generate_queen_moves(start_square)
+        else:
+            moves = self.generate_king_moves(start_square)
 
         if algebraic_move[1] in moves:
             if algebraic_move[0] == "P":
@@ -245,6 +249,16 @@ class ChessGame:
                     else self.board.black_rook.set_square(algebraic_move[1])
                 self.board.white_rook.clear_square(start_square) if self.is_white_turn \
                     else self.board.black_rook.clear_square(start_square)
+            elif algebraic_move[0] == "Q":
+                self.board.white_queen.set_square(algebraic_move[1]) if self.is_white_turn \
+                    else self.board.black_queen.set_square(algebraic_move[1])
+                self.board.white_queen.clear_square(start_square) if self.is_white_turn \
+                    else self.board.black_queen.clear_square(start_square)
+            else:
+                self.board.white_king.set_square(algebraic_move[1]) if self.is_white_turn \
+                    else self.board.black_king.set_square(algebraic_move[1])
+                self.board.white_king.clear_square(start_square) if self.is_white_turn \
+                    else self.board.black_king.clear_square(start_square)
 
             if self.is_white_turn:
                 self.is_white_turn = False
@@ -405,6 +419,40 @@ class ChessGame:
 
         return moves
 
+    def generate_queen_moves(self, queen_square):
+        moves = []
+
+        moves.extend(self.generate_bishop_moves(queen_square))
+        moves.extend(self.generate_rook_moves(queen_square))
+
+        return moves
+
+    def generate_king_moves(self, king_square):
+        self.board.get_all_pieces()
+        moves = []
+
+        king_bitboard = 1 << king_square
+        own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.black_pieces.get_bitboard()
+
+        shift_possibilities = [1, 7, 8, 9]
+
+        # upper L
+        for shift in shift_possibilities:
+            king_move = (king_bitboard << abs(-shift)) & ~own_pieces
+
+            if king_move:
+                moves.append(king_square + shift)
+
+        # lower L
+        for shift in shift_possibilities:
+            king_move = (king_bitboard << shift) & ~own_pieces
+
+            if king_move:
+                moves.append(king_square - shift)
+
+        return moves
+
 
 if __name__ == "__main__":
     game = ChessGame()
@@ -412,9 +460,7 @@ if __name__ == "__main__":
     game.print_state()
     count = 0
     while count < 5:
-        # game.make_move(input("starting_square:"), input("move:"))
-        game.make_move(0, "Ra4")
-        game.make_move(49, "b5")
-        game.make_move(24, "Rh4")
+        game.make_move(input("starting_square:"), input("move:"))
+        # game.make_move(3, "Qd3")
         game.print_state()
         count += 1
