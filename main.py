@@ -207,7 +207,7 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR")
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
@@ -221,6 +221,8 @@ class ChessGame:
             moves = self.generate_knight_moves(start_square)
         elif algebraic_move[0] == "B":
             moves = self.generate_bishop_moves(start_square)
+        elif algebraic_move[0] == "R":
+            moves = self.generate_rook_moves(start_square)
 
         if algebraic_move[1] in moves:
             if algebraic_move[0] == "P":
@@ -238,6 +240,11 @@ class ChessGame:
                     else self.board.black_bishop.set_square(algebraic_move[1])
                 self.board.white_bishop.clear_square(start_square) if self.is_white_turn \
                     else self.board.black_bishop.clear_square(start_square)
+            elif algebraic_move[0] == "R":
+                self.board.white_rook.set_square(algebraic_move[1]) if self.is_white_turn \
+                    else self.board.black_rook.set_square(algebraic_move[1])
+                self.board.white_rook.clear_square(start_square) if self.is_white_turn \
+                    else self.board.black_rook.clear_square(start_square)
 
             if self.is_white_turn:
                 self.is_white_turn = False
@@ -349,6 +356,55 @@ class ChessGame:
                 break
         return moves
 
+    def generate_rook_moves(self, rook_square):
+        self.board.get_all_pieces()
+        moves = []
+
+        rook_bitboard = 1 << rook_square
+        own_pieces = self.board.white_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.black_pieces.get_bitboard()
+
+        # up
+        for i in range(1, 7):
+            up_move = (rook_bitboard << abs((i * 8) * -1)) & ~own_pieces
+
+            destination = (rook_square + (8 * i))
+            if up_move and 0 <= destination <= 63:
+                moves.append(destination)
+            else:
+                break
+        # down
+        for i in range(1, 7):
+            down_move = (rook_bitboard << abs(i * 8)) & ~own_pieces
+
+            destination = (rook_square - (8 * i))
+            if down_move and 0 <= destination <= 63:
+                moves.append(destination)
+            else:
+                break
+
+        # right
+        for i in range(1, 7):
+            down_move = (rook_bitboard << abs(-i)) & ~own_pieces
+
+            destination = (rook_square + i)
+            if down_move and 0 <= destination <= 63:
+                moves.append(destination)
+            else:
+                break
+
+        # left
+        for i in range(1, 7):
+            down_move = (rook_bitboard << abs(i)) & ~own_pieces
+
+            destination = (rook_square - i)
+            if down_move and 0 <= destination <= 63:
+                moves.append(destination)
+            else:
+                break
+
+        return moves
+
 
 if __name__ == "__main__":
     game = ChessGame()
@@ -356,7 +412,7 @@ if __name__ == "__main__":
     game.print_state()
     count = 0
     while count < 5:
-        game.make_move(input("starting_square:"), input("move:"))
-        # game.make_move(2, "Bh6")
+        # game.make_move(input("starting_square:"), input("move:"))
+        game.make_move(2, "Bh6")
         game.print_state()
         count += 1
