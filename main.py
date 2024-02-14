@@ -461,9 +461,12 @@ class ChessGame:
         opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
             else self.board.white_pieces.get_bitboard()
 
+        file = (rook_square % 8) + 1
+        last_file = file
+
         # up
         for i in range(1, 8):
-            up_move = (rook_bitboard << abs((i * 8) * -1)) & ~own_pieces
+            up_move = (rook_bitboard << i * 8) & ~own_pieces
 
             destination = (rook_square + (8 * i))
             if up_move and 0 <= destination <= 63:
@@ -474,7 +477,7 @@ class ChessGame:
                 break
         # down
         for i in range(1, 8):
-            down_move = (rook_bitboard << abs(i * 8)) & ~own_pieces
+            down_move = (rook_bitboard >> i * 8) & ~own_pieces
 
             destination = (rook_square - (8 * i))
             if down_move and 0 <= destination <= 63:
@@ -486,24 +489,36 @@ class ChessGame:
 
         # right
         for i in range(1, 8):
-            down_move = (rook_bitboard << abs(-i)) & ~own_pieces
+            right_move = (rook_bitboard << i) & ~own_pieces
 
             destination = (rook_square + i)
-            if down_move and 0 <= destination <= 63:
-                moves.append(destination)
-                if opponent_pieces & (1 << destination):
+            next_file = (destination % 8) + 1
+            if next_file - last_file == 1:
+                if right_move and 0 <= destination <= 63:
+                    moves.append(destination)
+                    last_file = next_file
+                    if opponent_pieces & (1 << destination):
+                        last_file = file
+                        break
+                else:
                     break
             else:
+                last_file = file
                 break
 
         # left
         for i in range(1, 8):
-            down_move = (rook_bitboard << abs(i)) & ~own_pieces
+            left_move = (rook_bitboard >> i) & ~own_pieces
 
             destination = (rook_square - i)
-            if down_move and 0 <= destination <= 63:
-                moves.append(destination)
-                if opponent_pieces & (1 << destination):
+            next_file = (destination % 8) + 1
+            if last_file - next_file == 1:
+                if left_move and 0 <= destination <= 63:
+                    moves.append(destination)
+                    last_file = next_file
+                    if opponent_pieces & (1 << destination):
+                        break
+                else:
                     break
             else:
                 break
@@ -547,12 +562,12 @@ class ChessGame:
 
 if __name__ == "__main__":
     game = ChessGame()
-    game.custom_setup("rnbqkbnr/pppppppp/8/1P6/8/B7/PPPPPPPP/RNBQKBNR")
+    game.custom_setup("rnbqkbnr/pppppppp/8/P7/8/P4R2/PPPPPPPP/RNBQKBNR")
     game.print_state()
     count = 0
     while count < 5:
         # game.make_move(input("starting_square:"), input("move:"))
-        game.make_move(16, "Bb2")
+        game.make_move(21, "Rb3")
         game.print_state()
         game.board.black_pawn.print_board()
         count += 1
