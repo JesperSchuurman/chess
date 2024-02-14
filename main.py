@@ -207,7 +207,10 @@ class ChessGame:
         self.board.print_board()
 
     def standard_setup(self):
-        self.board.setup_board("rnbqkbnr/ppppppp1/7p/8/8/8/PPP1PPPP/RNBQKBNR")
+        self.board.setup_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+
+    def custom_setup(self, fen):
+        self.board.setup_board(fen)
 
     def make_move(self, start_square, move):
         algebraic_move = convert_algebraic_to_int(move)
@@ -305,9 +308,10 @@ class ChessGame:
         starting_rank = 1 if self.is_white_turn else 6
 
         # single square moves
-        single_moves = (pawn_bitboard << abs(8 * direction)) & ~all_pieces
-        if single_moves:
-            moves.append(pawn_square + (8 * direction))
+        if 0 <= pawn_square + 8 * direction <= 63:
+            single_moves = (pawn_bitboard << abs(8 * direction)) & ~all_pieces
+            if single_moves:
+                moves.append(pawn_square + (8 * direction))
 
         # double square moves
         if pawn_square // 8 == starting_rank:
@@ -338,18 +342,31 @@ class ChessGame:
             else self.board.black_pieces.get_bitboard()
 
         shift_possibilities = [6, 10, 15, 17]
+        file = (knight_square % 8) + 1
 
-        # forward knight moves
         for shift in shift_possibilities:
-            forward_moves = (knight_bitboard >> shift) & ~own_pieces
-            if forward_moves:
-                moves.append(knight_square - shift)
+            # forward knight moves
+            forward_destination = knight_square + shift
+            if (file <= 2 and shift == 6) or (file == 1 and shift == 15) or (file >= 7 and shift == 10) or \
+                    (file == 8 and shift == 17):
+                continue
+
+            if forward_destination < 64:
+                forward_moves = (knight_bitboard << shift) & ~own_pieces
+                if forward_moves:
+                    moves.append(forward_destination)
 
         # backward knight moves
         for shift in shift_possibilities:
-            backward_moves = (knight_bitboard << shift) & ~own_pieces
-            if backward_moves:
-                moves.append(knight_square + shift)
+            backward_destination = knight_square - shift
+            if (file <= 2 and shift == 10) or (file == 1 and shift == 17) or (file >= 7 and shift == 6) or \
+                    (file == 8 and shift == 15):
+                continue
+
+            if backward_destination >= 0:
+                backward_moves = (knight_bitboard >> shift) & ~own_pieces
+                if backward_moves:
+                    moves.append(backward_destination)
 
         return moves
 
@@ -363,47 +380,72 @@ class ChessGame:
         opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
             else self.board.white_pieces.get_bitboard()
 
+        file = (bishop_square % 8) + 1
+        last_file = file
+
         # left forward
         for i in range(1, 8):
-            left_forward = (bishop_bitboard << abs((i * 8 - i) * -1)) & ~own_pieces
+            left_forward = (bishop_bitboard << abs(i * 8 - i)) & ~own_pieces
 
             destination = bishop_square + (i * 8 - i)
-            if left_forward and 0 <= destination <= 63:
-                moves.append(destination)
-                if opponent_pieces & (1 << destination):
+            if (last_file - (destination % 8) + 1) == 1:
+                if left_forward and 0 <= destination <= 63:
+                    moves.append(destination)
+                    last_file = (destination % 8) + 1
+                    if opponent_pieces & (1 << destination):
+                        last_file = file
+                        break
+                else:
                     break
             else:
+                last_file = file
                 break
         # right forward
         for i in range(1, 8):
-            right_forward = (bishop_bitboard << abs((i * 8 + i) * -1)) & ~own_pieces
+            right_forward = (bishop_bitboard << abs(i * 8 + i)) & ~own_pieces
 
             destination = bishop_square + (i * 8 + i)
-            if right_forward and 0 <= destination <= 63:
-                moves.append(destination)
-                if opponent_pieces & (1 << destination):
+            if ((destination % 8) + 1) - last_file == 1:
+                if right_forward and 0 <= destination <= 63:
+                    moves.append(destination)
+                    last_file = (destination % 8) + 1
+                    if opponent_pieces & (1 << destination):
+                        last_file = file
+                        break
+                else:
                     break
             else:
+                last_file = file
                 break
         # left backward
         for i in range(1, 8):
-            left_backward = (bishop_bitboard << (i * 8 + i)) & ~own_pieces
+            left_backward = (bishop_bitboard >> (i * 8 + i)) & ~own_pieces
 
             destination = bishop_square - (i * 8 + i)
-            if left_backward and 0 <= destination <= 63:
-                moves.append(destination)
-                if opponent_pieces & (1 << destination):
+            if (last_file - (destination % 8) + 1) == 1:
+                if left_backward and 0 <= destination <= 63:
+                    moves.append(destination)
+                    last_file = (destination % 8) + 1
+                    if opponent_pieces & (1 << destination):
+                        last_file = file
+                        break
+                else:
                     break
             else:
+                last_file = file
                 break
         # right backward
         for i in range(1, 8):
-            right_backward = (bishop_bitboard << abs(i * 8 - i)) & ~own_pieces
+            right_backward = (bishop_bitboard >> abs(i * 8 - i)) & ~own_pieces
 
             destination = bishop_square - (i * 8 - i)
-            if right_backward and 0 <= destination <= 63:
-                moves.append(destination)
-                if opponent_pieces & (1 << destination):
+            if ((destination % 8) + 1) - last_file == 1:
+                if right_backward and 0 <= destination <= 63:
+                    moves.append(destination)
+                    last_file = (destination % 8) + 1
+                    if opponent_pieces & (1 << destination):
+                        break
+                else:
                     break
             else:
                 break
@@ -505,12 +547,12 @@ class ChessGame:
 
 if __name__ == "__main__":
     game = ChessGame()
-    game.standard_setup()
+    game.custom_setup("rnbqkbnr/pppppppp/8/1P6/8/B7/PPPPPPPP/RNBQKBNR")
     game.print_state()
     count = 0
     while count < 5:
         # game.make_move(input("starting_square:"), input("move:"))
-        game.make_move(2, "Bh6")
+        game.make_move(16, "Bb2")
         game.print_state()
         game.board.black_pawn.print_board()
         count += 1
