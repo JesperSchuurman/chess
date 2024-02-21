@@ -1,3 +1,6 @@
+import copy
+
+
 class Bitboard:
     def __init__(self):
         # Initialize an empty bitboard
@@ -202,6 +205,8 @@ class ChessGame:
     def __init__(self):
         self.board = Chessboard()
         self.is_white_turn = True
+        self.checked = False
+        self.mated = False
 
     def print_state(self):
         self.board.print_board()
@@ -217,83 +222,127 @@ class ChessGame:
 
         start_square = int(start_square)
 
-        if algebraic_move[0] == "P":
-            moves = self.generate_pawn_moves(start_square)
-        elif algebraic_move[0] == "N":
-            moves = self.generate_knight_moves(start_square)
-        elif algebraic_move[0] == "B":
-            moves = self.generate_bishop_moves(start_square)
-        elif algebraic_move[0] == "R":
-            moves = self.generate_rook_moves(start_square)
-        elif algebraic_move[0] == "Q":
-            moves = self.generate_queen_moves(start_square)
-        else:
-            moves = self.generate_king_moves(start_square)
+        moves = self.generate_legal_moves(start_square)
 
         if algebraic_move[1] in moves:
-            if algebraic_move[0] == "P":
-                self.board.white_pawn.set_square(algebraic_move[1]) if self.is_white_turn \
-                    else self.board.black_pawn.set_square(algebraic_move[1])
-                self.board.white_pawn.clear_square(start_square) if self.is_white_turn \
-                    else self.board.black_pawn.clear_square(start_square)
-            elif algebraic_move[0] == "N":
-                self.board.white_knight.set_square(algebraic_move[1]) if self.is_white_turn \
-                    else self.board.black_knight.set_square(algebraic_move[1])
-                self.board.white_knight.clear_square(start_square) if self.is_white_turn \
-                    else self.board.black_knight.clear_square(start_square)
-            elif algebraic_move[0] == "B":
-                self.board.white_bishop.set_square(algebraic_move[1]) if self.is_white_turn \
-                    else self.board.black_bishop.set_square(algebraic_move[1])
-                self.board.white_bishop.clear_square(start_square) if self.is_white_turn \
-                    else self.board.black_bishop.clear_square(start_square)
-            elif algebraic_move[0] == "R":
-                self.board.white_rook.set_square(algebraic_move[1]) if self.is_white_turn \
-                    else self.board.black_rook.set_square(algebraic_move[1])
-                self.board.white_rook.clear_square(start_square) if self.is_white_turn \
-                    else self.board.black_rook.clear_square(start_square)
-            elif algebraic_move[0] == "Q":
-                self.board.white_queen.set_square(algebraic_move[1]) if self.is_white_turn \
-                    else self.board.black_queen.set_square(algebraic_move[1])
-                self.board.white_queen.clear_square(start_square) if self.is_white_turn \
-                    else self.board.black_queen.clear_square(start_square)
+            if self.is_checked():
+                if self.check_move_for_check(start_square, move):
+                    print("This isn't a valid move.")
+                else:
+                    self.execute_move(start_square, move)
+                    self.toggle_turn()
             else:
-                self.board.white_king.set_square(algebraic_move[1]) if self.is_white_turn \
-                    else self.board.black_king.set_square(algebraic_move[1])
-                self.board.white_king.clear_square(start_square) if self.is_white_turn \
-                    else self.board.black_king.clear_square(start_square)
-            if move.__contains__("x"):
-                # taking pawns
-                if self.board.white_pawn.is_square_set(algebraic_move[1]):
-                    self.board.white_pawn.clear_square(algebraic_move[1])
-                elif self.board.black_pawn.is_square_set(algebraic_move[1]):
-                    self.board.black_pawn.clear_square(algebraic_move[1])
-                # taking knights
-                elif self.board.white_knight.is_square_set(algebraic_move[1]):
-                    self.board.white_knight.clear_square(algebraic_move[1])
-                elif self.board.black_knight.is_square_set(algebraic_move[1]):
-                    self.board.black_knight.clear_square(algebraic_move[1])
-                # taking bishops
-                elif self.board.white_bishop.is_square_set(algebraic_move[1]):
-                    self.board.white_bishop.clear_square(algebraic_move[1])
-                elif self.board.black_bishop.is_square_set(algebraic_move[1]):
-                    self.board.black_bishop.clear_square(algebraic_move[1])
-                # taking rooks
-                elif self.board.white_rook.is_square_set(algebraic_move[1]):
-                    self.board.white_rook.clear_square(algebraic_move[1])
-                elif self.board.black_rook.is_square_set(algebraic_move[1]):
-                    self.board.black_rook.clear_square(algebraic_move[1])
-                # taking queens
-                elif self.board.white_queen.is_square_set(algebraic_move[1]):
-                    self.board.white_queen.clear_square(algebraic_move[1])
-                elif self.board.black_queen.is_square_set(algebraic_move[1]):
-                    self.board.black_queen.clear_square(algebraic_move[1])
-
-            if self.is_white_turn:
-                self.is_white_turn = False
-            else:
-                self.is_white_turn = True
+                if not self.check_move_for_check(start_square, move):
+                    self.execute_move(start_square, move)
+                    self.toggle_turn()
+                else:
+                    print("This isn't a valid move.")
         else:
             print("This isn't a valid move.")
+
+    def toggle_turn(self):
+        if self.is_white_turn:
+            self.is_white_turn = False
+        else:
+            self.is_white_turn = True
+
+    def execute_move(self, start_square, move):
+        algebraic_move = convert_algebraic_to_int(move)
+
+        if algebraic_move[0] == "P":
+            self.board.white_pawn.set_square(algebraic_move[1]) if self.is_white_turn \
+                else self.board.black_pawn.set_square(algebraic_move[1])
+            self.board.white_pawn.clear_square(start_square) if self.is_white_turn \
+                else self.board.black_pawn.clear_square(start_square)
+        elif algebraic_move[0] == "N":
+            self.board.white_knight.set_square(algebraic_move[1]) if self.is_white_turn \
+                else self.board.black_knight.set_square(algebraic_move[1])
+            self.board.white_knight.clear_square(start_square) if self.is_white_turn \
+                else self.board.black_knight.clear_square(start_square)
+        elif algebraic_move[0] == "B":
+            self.board.white_bishop.set_square(algebraic_move[1]) if self.is_white_turn \
+                else self.board.black_bishop.set_square(algebraic_move[1])
+            self.board.white_bishop.clear_square(start_square) if self.is_white_turn \
+                else self.board.black_bishop.clear_square(start_square)
+        elif algebraic_move[0] == "R":
+            self.board.white_rook.set_square(algebraic_move[1]) if self.is_white_turn \
+                else self.board.black_rook.set_square(algebraic_move[1])
+            self.board.white_rook.clear_square(start_square) if self.is_white_turn \
+                else self.board.black_rook.clear_square(start_square)
+        elif algebraic_move[0] == "Q":
+            self.board.white_queen.set_square(algebraic_move[1]) if self.is_white_turn \
+                else self.board.black_queen.set_square(algebraic_move[1])
+            self.board.white_queen.clear_square(start_square) if self.is_white_turn \
+                else self.board.black_queen.clear_square(start_square)
+        else:
+            self.board.white_king.set_square(algebraic_move[1]) if self.is_white_turn \
+                else self.board.black_king.set_square(algebraic_move[1])
+            self.board.white_king.clear_square(start_square) if self.is_white_turn \
+                else self.board.black_king.clear_square(start_square)
+        if move.__contains__("x"):
+            # taking pawns
+            if self.board.white_pawn.is_square_set(algebraic_move[1]):
+                self.board.white_pawn.clear_square(algebraic_move[1])
+            elif self.board.black_pawn.is_square_set(algebraic_move[1]):
+                self.board.black_pawn.clear_square(algebraic_move[1])
+            # taking knights
+            elif self.board.white_knight.is_square_set(algebraic_move[1]):
+                self.board.white_knight.clear_square(algebraic_move[1])
+            elif self.board.black_knight.is_square_set(algebraic_move[1]):
+                self.board.black_knight.clear_square(algebraic_move[1])
+            # taking bishops
+            elif self.board.white_bishop.is_square_set(algebraic_move[1]):
+                self.board.white_bishop.clear_square(algebraic_move[1])
+            elif self.board.black_bishop.is_square_set(algebraic_move[1]):
+                self.board.black_bishop.clear_square(algebraic_move[1])
+            # taking rooks
+            elif self.board.white_rook.is_square_set(algebraic_move[1]):
+                self.board.white_rook.clear_square(algebraic_move[1])
+            elif self.board.black_rook.is_square_set(algebraic_move[1]):
+                self.board.black_rook.clear_square(algebraic_move[1])
+            # taking queens
+            elif self.board.white_queen.is_square_set(algebraic_move[1]):
+                self.board.white_queen.clear_square(algebraic_move[1])
+            elif self.board.black_queen.is_square_set(algebraic_move[1]):
+                self.board.black_queen.clear_square(algebraic_move[1])
+
+    def check_move_for_check(self, start_square, move):
+        temp_board = copy.deepcopy(self)
+
+        temp_board.execute_move(start_square, move)
+
+        return temp_board.is_checked()
+
+    def generate_legal_moves(self, square):
+        piece = self.get_piece_at(square)
+        if piece == "P":
+            return self.generate_pawn_moves(square)
+        elif piece == "N":
+            return self.generate_knight_moves(square)
+        elif piece == "B":
+            return self.generate_bishop_moves(square)
+        elif piece == "R":
+            return self.generate_rook_moves(square)
+        elif piece == "Q":
+            return self.generate_queen_moves(square)
+        elif piece == "K":
+            return self.generate_king_moves(square)
+
+    def get_piece_at(self, square):
+        if self.board.white_pawn.is_square_set(square) or self.board.black_pawn.is_square_set(square):
+            return "P"
+        elif self.board.white_knight.is_square_set(square) or self.board.black_knight.is_square_set(square):
+            return "N"
+        elif self.board.white_pawn.is_square_set(square) or self.board.black_bishop.is_square_set(square):
+            return "B"
+        elif self.board.white_rook.is_square_set(square) or self.board.black_rook.is_square_set(square):
+            return "R"
+        elif self.board.white_queen.is_square_set(square) or self.board.black_queen.is_square_set(square):
+            return "Q"
+        elif self.board.white_king.is_square_set(square) or self.board.black_king.is_square_set(square):
+            return "K"
+        else:
+            return None
 
     def generate_pawn_moves(self, pawn_square):
         self.board.get_all_pieces()
@@ -547,22 +596,54 @@ class ChessGame:
         for shift in shift_possibilities:
             king_move = (king_bitboard << abs(-shift)) & ~own_pieces
 
-            if king_move:
+            if king_move and not self.check_king_move_for_check(king_square, (king_square + shift)):
                 moves.append(king_square + shift)
 
         # lower L
         for shift in shift_possibilities:
             king_move = (king_bitboard << shift) & ~own_pieces
 
-            if king_move:
+            if king_move and not self.check_king_move_for_check(king_square, (king_square - shift)):
                 moves.append(king_square - shift)
 
         return moves
 
+    def check_king_move_for_check(self, start_square, destination):
+        temp_board = copy.deepcopy(self)
+
+        temp_board.board.white_king.set_square(destination)
+        temp_board.board.white_king.clear_square(start_square)
+
+        return temp_board.is_checked()
+
+    def is_checked(self):
+        self.board.get_all_pieces()
+
+        opponent_pieces = self.board.black_pieces.get_bitboard() if self.is_white_turn \
+            else self.board.black_pieces.get_bitboard()
+
+        king_square = self.board.white_king.get_bitboard() if self.is_white_turn \
+            else self.board.black_king.get_bitboard()
+
+        for piece_square in range(64):
+            if opponent_pieces & (1 << piece_square):
+                if king_square in self.generate_legal_moves(piece_square):
+                    return True
+        return False
+
+    def is_checkmate(self):
+        if not self.is_checked():
+            return False
+        else:
+            king_square = self.board.white_king.get_bitboard() if self.is_white_turn \
+                else self.board.black_king.get_bitboard()
+            if self.generate_king_moves(king_square):
+                return False
+
 
 if __name__ == "__main__":
     game = ChessGame()
-    game.custom_setup("rnbqkbnr/pppppppp/8/P7/8/P4R2/PPPPPPPP/RNBQKBNR")
+    game.custom_setup("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     game.print_state()
     count = 0
     while count < 5:
